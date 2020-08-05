@@ -73,6 +73,66 @@ python run_seq_labeling.py  --data_dir data \
 
 Also, you can run Bert, RoBERTa, and DistilBERT baseline by modifying the `--model_type` argument. For more options, please refer to the arguments of `run.py`.
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Elnaz Edit: to be able to avoid directory overwrite when the output from training is used as the model for eval and predict, 
+In run_seq_labeling.py
+In line 812-814
+
+tokenizer = tokenizer_class.from_pretrained( args.output_dir, do_lower_case=args.do_lower_case )
+
+Is searching for the tokenizer in the directory in which we expect to see the predict results.
+so i changed the args.output_dir for the correct one:
+
+tokenizer = tokenizer_class.from_pretrained(
+            args.model_name_or_path, do_lower_case=args.do_lower_case
+        )
+
+Similar issue in
+Line 815
+
+model = model_class.from_pretrained(args.output_dir)
+
+Fixed:
+
+model = model_class.from_pretrained(args.model_name_or_path)
+
+No need to comment the line 688, but ensure that output_dir don't exist
+
+out_dir = 'output'
+model_path = folder
+
+And all done!
+Implementation (Note that was done in Jupyter):
+
+!python run_seq_labeling.py  --data_dir data \
+                            --model_type layoutlm \
+                            --model_name_or_path {model_path} \
+                            --do_lower_case \
+                            --max_seq_length 512 \
+                            --do_train \
+                            --num_train_epochs 100.0 \
+                            --logging_steps 10 \
+                            --save_steps -1 \
+                            --output_dir {out_dir} \
+                            --labels data/labels.txt \
+                            --per_gpu_train_batch_size 16 \
+                            --fp16
+
+!python scripts/funsd_preprocess.py --data_dir data/testing_data/annotations --data_split test
+
+pred_dir = "predictions"
+
+!python run_seq_labeling.py  --do_predict \
+                            --data_dir data \
+                            --model_type layoutlm \
+                            --model_name_or_path {out_dir} \
+                            --do_lower_case \
+                            --output_dir predictions \
+                            --labels data/labels.txt \
+                            --fp16
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
 ### Document Image Classification Task
 
 We also fine-tune LayoutLM on the document image classification task. You can download the [RVL-CDIP](https://www.cs.cmu.edu/~aharley/rvl-cdip/) dataset from [here](https://www.cs.cmu.edu/~aharley/rvl-cdip/). Because this dataset only provides the document image, you should use the OCR tool to get the texts and bounding boxes. For example, you can easily use Tesseract, an open-source OCR engine, to generate corresponding OCR data in hOCR format. For more details, please refer to the [Tesseract wiki](https://github.com/tesseract-ocr/tesseract/wiki). Your processed data should look like [this sample data](https://1drv.ms/u/s!ApPZx_TWwibInTlBa5q3tQ7QUdH_?e=UZLVFw). 
