@@ -1,4 +1,7 @@
 # LayoutLM This is the older version of the original repo
+update 18/08/2020 to avoid segmentation fault, pytorch 1.6 has been used. If upgraded the latest repo should work. However the edits bellow the output_dir have still been necessary for me to run inference.
+
+Currently investigating possibility to run inference without evaluation.
 **Multimodal (text + layout/format + image) pre-training for document understanding**
 
 ## Introduction
